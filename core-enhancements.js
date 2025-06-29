@@ -14,14 +14,8 @@ export function escapeHTML(str = "") {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-// ─────────── NOTIFICATION CORE (unified + global) ───────────
-import { auth, db } from "./firebase-init.js";
-import {
-  ref,
-  push,
-  update,
-  onValue,
-} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+// ─────────── NOTIFICATION CORE ───────────
+import { auth, db, ref, push, update, onValue } from "./firebase-init.js";
 
 export const notifPath = (uid) => `notifications/${uid}`;
 
@@ -64,10 +58,7 @@ export function showLoading(targetId = "mainContent", message = "Loading...") {
 }
 
 // ─────────── SIDEBAR STATE MEMORY ───────────
-const sideMenu = $("sideMenu");
-const mainArea = safeQuery(".main-area");
-
-export function restoreSidebarState() {
+export function restoreSidebarState(sideMenu, mainArea) {
   const open = sessionStorage.getItem("sidebarOpen") === "true";
   if (sideMenu && mainArea) {
     sideMenu.style.display = open ? "flex" : "none";
@@ -92,9 +83,11 @@ export function normalizeUser(user = {}) {
 
 // ─────────── ONE-TIME INIT ON LOAD ───────────
 document.addEventListener("DOMContentLoaded", () => {
-  restoreSidebarState();
+  const sideMenu = $("sideMenu");
+  const mainArea = safeQuery(".main-area");
 
-  // Clear console warnings for missing elements
+  restoreSidebarState(sideMenu, mainArea);
+
   if (!sideMenu || !mainArea) {
     console.warn("⚠️ Sidebar or main-area container not found.");
   }
