@@ -744,62 +744,133 @@ function showCreateLesson() {
   if (window.currentUserRole !== "creator") return;
 
   resetLayout();
-  toggleSidebar(false); // 👈 Force sidebar to close after tab click
+  toggleSidebar(false);
   viewHistory.push("createLesson");
 
   document.getElementById("mainContent").innerHTML = `
-      <div style="max-width:600px; margin:0 auto; text-align:left;">
-        <h2>Create a New Lesson</h2>
-        <form id="lessonForm">
-          <label>Lesson Title</label>
-          <input type="text" id="lessonTitle" required style="width:100%;padding:10px;margin:8px 0;" />
+      <div style="
+        position: relative;
+        top: 1cm;
+        height: calc(100vh - 160px);
+        overflow-y: auto;
+        max-width: 700px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        scrollbar-width: none;
+        -ms-overflow-style: none;">
+        <style>
+          #mainContent::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+          }
+        </style>
   
-          <label>Lesson Description</label>
-          <textarea id="lessonDescription" rows="5" required style="width:100%;padding:10px;margin:8px 0;"></textarea>
+        <h2 style="text-align: center; color: #333; margin-bottom: 25px;">📘 Create a New Lesson</h2>
   
-          <label>Upload Photo or Video (optional)</label>
-          <input type="file" id="lessonFile" accept="image/*,video/*" style="margin:8px 0;" />
+        <form id="createLessonForm">
+          <label style="font-weight: bold;">Lesson Title:</label>
+          <input type="text" id="createTitle" required
+                 style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px;" />
   
-          <label>Website URL (optional)</label>
-          <input type="url" id="lessonURL" style="width:100%;padding:10px;margin:8px 0;" />
+          <label style="font-weight: bold;">Lesson Description:</label>
+          <textarea id="createDescription" required
+                    style="width:100%; padding:10px; margin:10px 0; height:120px; border:1px solid #ccc; border-radius:6px;"></textarea>
   
-          <button type="submit" style="margin-top:10px; background-color:#28a745;">Save Lesson</button>
+          <label style="font-weight: bold;">External Link (optional):</label>
+          <input type="url" id="createUrl"
+                 style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px;" />
+  
+          <label style="font-weight: bold;">Lesson Type:</label>
+          <select id="createType" required
+                  style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px;">
+            <option value="lesson">📘 Lesson</option>
+            <option value="scenario">📝 Practice Scenario</option>
+            <option value="exam">🧪 Exam</option>
+            <option value="answer_key">✅ Answer Key</option>
+            <option value="unclassified">📦 Unclassified</option>
+          </select>
+  
+          <label style="font-weight: bold;">Upload Photo or Video (optional):</label>
+          <input type="file" id="createFile" accept="image/*,video/*"
+                 style="width:100%; margin:10px 0;" />
+  
+          <button id="createSaveBtn" type="submit"
+                  style="width:100%; margin-top:20px; background:#28a745; color:#fff;
+                         padding:12px; font-size:16px; font-weight:bold; border:none;
+                         border-radius:6px; cursor:pointer;">
+            💾 Save Lesson
+          </button>
         </form>
       </div>
     `;
 
-  document
-    .getElementById("lessonForm")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("lessonTitle").value.trim();
-      const description = document
-        .getElementById("lessonDescription")
-        .value.trim();
-      const url = document.getElementById("lessonURL").value.trim();
-      const fileInput = document.getElementById("lessonFile");
-
-      const lessonId = Date.now();
-      const file = fileInput.files[0];
-
-      let fileData = null;
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = async function () {
-          fileData = reader.result;
-          await saveLessonToFirebase(
-            title,
-            description,
-            url,
-            fileData,
-            lessonId
-          );
-        };
-        reader.readAsDataURL(file);
-      } else {
-        await saveLessonToFirebase(title, description, url, null, lessonId);
-      }
+  // 🔄 Promisified file reader
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject("Failed to read file");
+      reader.readAsDataURL(file);
     });
+  }
+
+  // 🧠 Submit handler
+  document.getElementById("createLessonForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const saveBtn = document.getElementById("createSaveBtn");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Uploading...";
+
+    const title = document.getElementById("createTitle").value.trim();
+    const description = document
+      .getElementById("createDescription")
+      .value.trim();
+    const url = document.getElementById("createUrl").value.trim();
+    const type = document.getElementById("createType").value;
+    const fileInput = document.getElementById("createFile");
+    const file = fileInput.files[0];
+    const lessonId = Date.now();
+
+    const lesson = {
+      title,
+      description,
+      url,
+      type,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      if (file) {
+        const maxSize = 5 * 1024 * 1024;
+        const allowedTypes = ["image", "video"];
+        const fileType = file.type.split("/")[0];
+
+        if (!allowedTypes.includes(fileType)) {
+          alert("⚠️ Only image or video files are allowed.");
+          throw new Error("Invalid file type");
+        }
+
+        if (file.size > maxSize) {
+          alert("⚠️ File is too large. Max 5 MB allowed.");
+          throw new Error("File too large");
+        }
+
+        lesson.fileData = await readFileAsDataURL(file);
+      }
+
+      await set(ref(db, `lessons/${lessonId}`), lesson);
+      alert("✅ Lesson created!");
+      renderLessonBoard();
+    } catch (err) {
+      console.error("❌ Failed to create lesson:", err);
+      alert("Something went wrong. Please try again.");
+      saveBtn.disabled = false;
+      saveBtn.textContent = "💾 Save Lesson";
+    }
+  };
 }
 
 /* ----------  CUSTOMER INSIGHT  ---------- */
@@ -2556,3 +2627,30 @@ setTimeout(() => {
     }
   });
 }, 1000);
+
+async function saveLessonToFirebase(
+  title,
+  description,
+  url,
+  fileData,
+  lessonId
+) {
+  try {
+    const lesson = {
+      title,
+      description,
+      url: url || null,
+      file: fileData || null,
+      timestamp: new Date().toISOString(),
+    };
+
+    const lessonRef = ref(db, `lessons/${lessonId}`);
+    await set(lessonRef, lesson);
+
+    alert("✅ Lesson saved successfully!");
+  } catch (error) {
+    console.error("❌ Error saving lesson:", error);
+    alert("Failed to save lesson. Please try again.");
+  }
+}
+
