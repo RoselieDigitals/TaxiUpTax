@@ -3,8 +3,20 @@ import {
   initializeApp,
   getApps,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+  update,
+  remove,
+  child,
+  onValue,
+  push,
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 // 🔁 Load Firebase config from localStorage
 let savedConfig = localStorage.getItem("firebaseConfig");
@@ -17,9 +29,10 @@ if (!savedConfig) {
 
 const firebaseConfig = JSON.parse(savedConfig);
 
-// ✅ Initialize Firebase
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-export { app, auth, db };
+// ✅ Export everything needed across your app
+export { app, auth, db, ref, get, set, update, remove, child, onValue, push };
+
