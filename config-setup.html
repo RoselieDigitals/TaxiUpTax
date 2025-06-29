@@ -51,10 +51,13 @@
       .reset-btn:hover {
         background: #c82333;
       }
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
+    <div class="container hidden" id="configFormContainer">
       <h2>Enter Firebase Configuration</h2>
       <input id="apiKey" placeholder="API Key" />
       <input id="authDomain" placeholder="Auth Domain" />
@@ -64,33 +67,70 @@
       <input id="appId" placeholder="App ID" />
       <input id="databaseURL" placeholder="Database URL" />
 
-      <button class="save-btn" onclick="saveConfig()">
-        Save Config & Launch App
-      </button>
+      <button class="save-btn" onclick="saveConfig()">Save Config & Launch App</button>
       <button class="reset-btn" onclick="resetConfig()">Reset Config</button>
     </div>
 
-    <script>
-      // ⛔ Redirect if already locked (setup completed)
-      if (localStorage.getItem("firebaseConfigLocked")) {
-        alert("Setup already completed. Redirecting to app...");
-        window.location.href = "home.html";
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import {
+        getDatabase,
+        ref,
+        get,
+        update
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+      const savedConfig = JSON.parse(localStorage.getItem("firebaseConfig") || "{}");
+      const isLocked = localStorage.getItem("firebaseConfigLocked") === "true";
+
+      if (!savedConfig.apiKey) {
+        // No config saved yet – allow form
+        document.getElementById("configFormContainer").classList.remove("hidden");
+      } else {
+        // Config exists – proceed to validation
+        const app = initializeApp(savedConfig);
+        const auth = getAuth();
+        const db = getDatabase();
+
+        onAuthStateChanged(auth, (user) => {
+          if (!user) {
+            window.location.href = "index.html";
+            return;
+          }
+
+          const uid = user.uid;
+          const userRef = ref(db, `students/${uid}`);
+          get(userRef).then((snap) => {
+            const userData = snap.val() || {};
+            const role = userData.role || "student";
+            const configDone = userData.configCompleted === true;
+
+            if (role !== "buyer") {
+              window.location.href = "home.html";
+            } else if (configDone || isLocked) {
+              window.location.href = "dashboard.html";
+            } else {
+              // Show form only once to buyers
+              document.getElementById("configFormContainer").classList.remove("hidden");
+            }
+          });
+        });
       }
 
-      function saveConfig() {
+      // Save Config
+      async function saveConfig() {
         const config = {
           apiKey: document.getElementById("apiKey").value.trim(),
           authDomain: document.getElementById("authDomain").value.trim(),
           projectId: document.getElementById("projectId").value.trim(),
           storageBucket: document.getElementById("storageBucket").value.trim(),
-          messagingSenderId: document
-            .getElementById("messagingSenderId")
-            .value.trim(),
+          messagingSenderId: document.getElementById("messagingSenderId").value.trim(),
           appId: document.getElementById("appId").value.trim(),
-          databaseURL: document
-            .getElementById("databaseURL")
-            .value.trim()
-            .replace(/^"+|"+$/g, ""),
+          databaseURL: document.getElementById("databaseURL").value.trim().replace(/^"+|"+$/g, ""),
         };
 
         if (Object.values(config).some((val) => val === "")) {
@@ -99,19 +139,28 @@
         }
 
         localStorage.setItem("firebaseConfig", JSON.stringify(config));
-        localStorage.setItem("firebaseConfigLocked", "true"); // 🔐 lock after save
-        alert("Firebase config saved! Redirecting...");
-        window.location.href = "home.html"; // your entry point
+        localStorage.setItem("firebaseConfigLocked", "true");
+
+        const app = initializeApp(config);
+        const auth = getAuth();
+        const db = getDatabase();
+
+        const user = auth.currentUser;
+        if (user) {
+          const uid = user.uid;
+          await update(ref(db, `students/${uid}`), { configCompleted: true });
+        }
+
+        alert("Config saved! Redirecting...");
+        window.location.href = "dashboard.html";
       }
 
       function resetConfig() {
         localStorage.removeItem("firebaseConfig");
-        localStorage.removeItem("firebaseConfigLocked"); // 🔓 unlock if needed
+        localStorage.removeItem("firebaseConfigLocked");
         alert("Firebase config has been cleared.");
         location.reload();
       }
     </script>
   </body>
 </html>
-
-
