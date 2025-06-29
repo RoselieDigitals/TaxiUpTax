@@ -6,10 +6,7 @@ import {
 import {
   getDatabase,
   ref,
-  get,
   set,
-  update,
-  remove,
   onValue,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import {
@@ -32,7 +29,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// 🎨 Load admin settings (background style)
+// 🎨 Admin-controlled background styling
 const adminSettingsRef = ref(db, "adminSettings");
 onValue(
   adminSettingsRef,
@@ -51,75 +48,98 @@ onValue(
   { onlyOnce: true }
 );
 
-// DOM elements
+// DOM references
 const coverPage = document.getElementById("coverPage");
 const authPanel = document.getElementById("authPanel");
 const startBtn = document.getElementById("startBtn");
-
-const signUpForm = document.getElementById("signUpForm");
-const loginForm = document.getElementById("loginForm");
 const toLoginLink = document.getElementById("toLogin");
 
-// 👉 Toggle from START screen to Sign Up form
+// 👉 Show Sign-Up form from Cover Page
 startBtn?.addEventListener("click", () => {
   coverPage.style.display = "none";
   authPanel.classList.remove("hidden");
-  signUpForm.classList.remove("hidden");
-  loginForm.classList.add("hidden");
+  document.getElementById("signUpForm").classList.remove("hidden");
+  document.getElementById("loginForm").classList.add("hidden");
 });
 
-// 👉 Switch to LOGIN form
+// 👉 Switch to Login form
 toLoginLink?.addEventListener("click", (e) => {
   e.preventDefault();
-  signUpForm.classList.add("hidden");
-  loginForm.classList.remove("hidden");
+  document.getElementById("signUpForm").classList.add("hidden");
+  document.getElementById("loginForm").classList.remove("hidden");
 
-  // Dynamically add link to go back to Sign Up
   if (!document.getElementById("toSignUp")) {
     const p = document.createElement("p");
     p.innerHTML = `Don't have an account yet? <a href="#" id="toSignUp">Sign Up</a>`;
-    loginForm.appendChild(p);
+    document.getElementById("loginForm").appendChild(p);
 
     document.getElementById("toSignUp").addEventListener("click", (e) => {
       e.preventDefault();
-      loginForm.classList.add("hidden");
-      signUpForm.classList.remove("hidden");
+      document.getElementById("loginForm").classList.add("hidden");
+      document.getElementById("signUpForm").classList.remove("hidden");
     });
   }
 });
 
-// 👉 Sign-Up Form Handler
-signUpForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("signUpEmail").value.trim();
-  const password = document.getElementById("signUpPassword").value.trim();
+// ✅ Delay form logic until DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  const signUpForm = document.getElementById("signUpForm");
+  const loginForm = document.getElementById("loginForm");
 
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    alert("🎉 Sign-up successful! Now log in.");
-    signUpForm.classList.add("hidden");
-    loginForm.classList.remove("hidden");
-  } catch (err) {
-    alert(`❌ Sign-up error: ${err.message}`);
-  }
-});
+  // ✅ Sign-Up Handler
+  signUpForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-// 👉 Login Form Handler
-loginForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value.trim();
+    const fullName = document.getElementById("fullName")?.value.trim();
+    const email = document.getElementById("signUpEmail")?.value.trim();
+    const password = document.getElementById("signUpPassword")?.value.trim();
+    const contact = document.getElementById("contactNumber")?.value.trim();
+    const country = document.getElementById("country")?.value.trim();
 
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    window.location.href = "home.html";
-  } catch (err) {
-    document.getElementById("loginError").textContent = "❌ " + err.message;
-  }
-});
+    console.log("📥 Captured full name:", fullName);
 
-// 👉 Show/hide password toggle
-document.getElementById("showPassword")?.addEventListener("change", (e) => {
-  const pwField = document.getElementById("loginPassword");
-  pwField.type = e.target.checked ? "text" : "password";
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      await set(ref(db, `students/${user.uid}`), {
+        fullName,
+        email,
+        contact,
+        country,
+        role: "student",
+        photoURL: "",
+      });
+
+      alert("🎉 Account created! You can now log in.");
+      signUpForm.classList.add("hidden");
+      loginForm.classList.remove("hidden");
+    } catch (err) {
+      alert(`❌ Sign-up error: ${err.message}`);
+    }
+  });
+
+  // ✅ Login Handler
+  loginForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "home.html";
+    } catch (err) {
+      document.getElementById("loginError").textContent = "❌ " + err.message;
+    }
+  });
+
+  // 👁️ Show/hide password
+  document.getElementById("showPassword")?.addEventListener("change", (e) => {
+    const pwField = document.getElementById("loginPassword");
+    pwField.type = e.target.checked ? "text" : "password";
+  });
 });
