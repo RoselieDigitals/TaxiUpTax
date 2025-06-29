@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home - TaxiUpTax LMS+CRM</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- ⏩ Sidebar -->
+      <div id="sideMenu">
+        <!-- <div class="menuItem">👀 If you see this, the sidebar works!</div> -->
+        <div id="sidebarDashboard" class="menuItem">📊 Dashboard</div>
+        <div id="sidebarCreateLesson" class="menuItem creator-only">
+          ➕ Create New Lesson
+        </div>
+        <div id="sidebarInsight" class="menuItem creator-only">
+          📊 Customer Insight
+        </div>
+        <div id="sidebarAdmin" class="menuItem creator-only">🛠 Admin Tools</div>
+      </div>
+
+      <!-- 🧠 Main Area -->
+      <div class="main-area">
+        <button id="hamburgerBtn">☰</button>
+
+        <!-- 🔝 Top Navigation -->
+        <div id="topNav">
+          <div class="navTab" id="topTabHome">HOME</div>
+          <div class="navTab" id="topTabServices">SERVICES OFFERED</div>
+        </div>
+
+        <!-- 📌 Main Content -->
+        <div id="mainContent" class="home-content">
+          <img
+            src="https://i.imgur.com/5Po4UJH.png"
+            alt="My Lessons"
+            class="home-img"
+            id="myLessonsBtn"
+          />
+          <img
+            src="https://i.imgur.com/DlzkGZS.png"
+            alt="Feedback Community"
+            class="home-img"
+            id="feedbackCommunityBtn"
+          />
+        </div>
+
+        <!-- 🔙 Back Button -->
+        <button
+          id="backBtn"
+          style="
+            position: fixed;
+            bottom: 62px; /* Just above bottom nav */
+            left: 16px;
+            width: clamp(90px, 25vw, 1in);
+            height: 1cm;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.2s ease;
+          "
+        >
+          ← Back
+        </button>
+
+        <!-- ⬇️ Bottom Navigation -->
+        <nav
+          id="bottomNav"
+          style="
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #333;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            border-radius: 16px 16px 0 0;
+          "
+        >
+          <button
+            id="bottomNavHome"
+            style="
+              background: none;
+              border: none;
+              font-size: 24px;
+              color: white;
+              cursor: pointer;
+            "
+          >
+            🏠
+          </button>
+
+          <div style="position: relative">
+            <button
+              id="bottomNavNotif"
+              style="
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: white;
+                cursor: pointer;
+              "
+            >
+              🔔
+            </button>
+            <span
+              id="notifBadge"
+              style="
+                display: none;
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                background: red;
+                color: white;
+                border-radius: 50%;
+                font-size: 12px;
+                padding: 2px 6px;
+                min-width: 20px;
+                text-align: center;
+                font-weight: bold;
+              "
+              >0</span
+            >
+          </div>
+
+          <button
+            id="bottomNavProfile"
+            style="
+              background: none;
+              border: none;
+              font-size: 24px;
+              color: white;
+              cursor: pointer;
+            "
+          >
+            👤
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- 🔌 App Scripts -->
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module" src="core-enhancements.js"></script>
+    <script type="module" src="home.js" defer></script>
+  </body>
+</html>
