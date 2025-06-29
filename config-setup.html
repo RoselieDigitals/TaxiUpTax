@@ -1,0 +1,100 @@
+<!-- config-setup.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Firebase Config Setup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 40px;
+    }
+    .container {
+      max-width: 520px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-weight: bold;
+      margin-top: 15px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .save-btn {
+      background: #007bff;
+      color: white;
+    }
+    .save-btn:hover {
+      background: #0056b3;
+    }
+    .reset-btn {
+      background: #dc3545;
+      color: white;
+    }
+    .reset-btn:hover {
+      background: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Enter Firebase Configuration</h2>
+    <input id="apiKey" placeholder="API Key" />
+    <input id="authDomain" placeholder="Auth Domain" />
+    <input id="projectId" placeholder="Project ID" />
+    <input id="storageBucket" placeholder="Storage Bucket" />
+    <input id="messagingSenderId" placeholder="Messaging Sender ID" />
+    <input id="appId" placeholder="App ID" />
+    <input id="databaseURL" placeholder="Database URL" />
+
+    <button class="save-btn" onclick="saveConfig()">Save Config & Launch App</button>
+    <button class="reset-btn" onclick="resetConfig()">Reset Config</button>
+  </div>
+
+  <script>
+    function saveConfig() {
+      const config = {
+        apiKey: document.getElementById("apiKey").value.trim(),
+        authDomain: document.getElementById("authDomain").value.trim(),
+        projectId: document.getElementById("projectId").value.trim(),
+        storageBucket: document.getElementById("storageBucket").value.trim(),
+        messagingSenderId: document.getElementById("messagingSenderId").value.trim(),
+        appId: document.getElementById("appId").value.trim(),
+        databaseURL: document.getElementById("databaseURL").value.trim(),
+      };
+
+      if (Object.values(config).some(val => val === "")) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      localStorage.setItem("firebaseConfig", JSON.stringify(config));
+      alert("Firebase config saved! Redirecting...");
+      window.location.href = "home.html"; // your entry point
+    }
+
+    function resetConfig() {
+      localStorage.removeItem("firebaseConfig");
+      alert("Firebase config has been cleared.");
+      location.reload();
+    }
+  </script>
+</body>
+</html>
