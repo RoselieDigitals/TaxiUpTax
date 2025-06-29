@@ -184,17 +184,25 @@ function toggleSidebar(force) {
   const mainArea = document.querySelector(".main-area");
   if (!sideMenu || !mainArea) return;
 
+  // 🛑 Only allow creators to toggle sidebar
+  if (window.currentUserRole !== "creator") {
+    sideMenu.classList.remove("open");
+    sideMenu.style.display = "none";
+    mainArea.style.marginLeft = "0";
+    return;
+  }
+
   const willOpen = typeof force !== "undefined" ? force : !menuVisible;
 
   if (window.innerWidth <= 768) {
-    // Mobile layout uses CSS class `.open`
+    // Mobile layout: toggle `.open` class
     if (willOpen) {
       sideMenu.classList.add("open");
     } else {
       sideMenu.classList.remove("open");
     }
   } else {
-    // Desktop layout uses flex/hide logic
+    // Desktop layout: show/hide + margin shift
     sideMenu.style.display = willOpen ? "flex" : "none";
     mainArea.style.marginLeft = willOpen ? "220px" : "0";
   }
@@ -231,7 +239,7 @@ function showDashboard() {
 
   onValue(userRef, (snap) => {
     const user = snap.val() || {};
-    const greet = user.name || "Student";
+    const greet = user.fullName || "Student";
 
     auto("mainContent").innerHTML = `
       <div style="padding: 1cm 15px 90px;">
@@ -609,13 +617,14 @@ function showProfile() {
 
   onValue(userRef, (snapshot) => {
     const user = snapshot.val() || {};
-    const name = user.name || "";
+    const name = user.fullName || ""; // ✅ Fixed: use fullName
     const email = user.email || "";
     const contact = user.contact || "";
     const country = user.country || "";
     const role = user.role || "student";
     const photo =
-      user.photo || "https://i.postimg.cc/PJYxtq3x/default-avatar.png";
+      user.photo ||
+      "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.freepik.com%2Fpremium-vector%2Fdefault-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_134151661.htm&psig=AOvVaw2YLuGwMUw1g6oZlIXx3ep9&ust=1751303730637000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCPirmviQl44DFQAAAAAdAAAAABAE";
 
     onValue(progressRef, (snap) => {
       const progress = snap.val() || {};
@@ -627,44 +636,44 @@ function showProfile() {
         totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
 
       document.getElementById("mainContent").innerHTML = `
-        <div style="position: relative; top: 1cm; height: calc(100vh - 160px); overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">
-          <h2 style="text-align:center; color:#007bff;">👤 Profile</h2>
-
-          <div style="display:flex; align-items:center; gap:20px; margin:20px 0;">
-            <img src="${photo}" id="profilePic" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #007bff;">
-            <input type="file" id="uploadPhoto" accept="image/*">
+          <div style="position: relative; top: 1cm; height: calc(100vh - 160px); overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">
+            <h2 style="text-align:center; color:#007bff;">👤 Profile</h2>
+  
+            <div style="display:flex; align-items:center; gap:20px; margin:20px 0;">
+              <img src="${photo}" id="profilePic" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #007bff;">
+              <input type="file" id="uploadPhoto" accept="image/*">
+            </div>
+  
+            <label><b>Full Name:</b></label>
+            <input type="text" id="profileName" value="${name}" style="width:100%; padding:10px; margin-bottom:10px;">
+  
+            <label><b>Email:</b></label>
+            <input type="email" value="${email}" readonly disabled style="width:100%; padding:10px; margin-bottom:10px; background:#eee;">
+  
+            <label><b>Contact Number:</b></label>
+            <input type="text" id="profileContact" value="${contact}" style="width:100%; padding:10px; margin-bottom:10px;">
+  
+            <label><b>Country:</b></label>
+            <input type="text" id="profileCountry" value="${country}" style="width:100%; padding:10px; margin-bottom:10px;">
+  
+            <label><b>Role:</b></label>
+            <input type="text" value="${role}" readonly disabled style="width:100%; padding:10px; background:#eee;">
+  
+            <h3 style="margin-top:30px; color:#333;">📊 Activity Overview</h3>
+            <p><b>Lessons Completed:</b> ${completed} / ${totalLessons}</p>
+            <p><b>Progress:</b> ${percentage}%</p>
+            <div style="height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; margin-bottom: 15px;">
+              <div style="width: ${percentage}%; background: #28a745; height: 100%;"></div>
+            </div>
+  
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+              <button onclick="saveProfileChanges('${uid}')" style="flex:1; background-color: #007bff; color: white; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">💾 Save Changes</button>
+              <button onclick="promptPasswordChange()" style="flex:1; background-color: #ffc107; color: black; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">🔑 Change Password</button>
+              <button onclick="confirmDeleteAccount()" style="flex:1; background-color: #dc3545; color: white; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Delete Account</button>
+              <button onclick="logoutUser()" style="flex:1; background-color: #6c757d; color: white; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">🔓 Logout</button>
+            </div>
           </div>
-
-          <label><b>Full Name:</b></label>
-          <input type="text" id="profileName" value="${name}" style="width:100%; padding:10px; margin-bottom:10px;">
-
-          <label><b>Email:</b></label>
-          <input type="email" value="${email}" readonly disabled style="width:100%; padding:10px; margin-bottom:10px; background:#eee;">
-
-          <label><b>Contact Number:</b></label>
-          <input type="text" id="profileContact" value="${contact}" style="width:100%; padding:10px; margin-bottom:10px;">
-
-          <label><b>Country:</b></label>
-          <input type="text" id="profileCountry" value="${country}" style="width:100%; padding:10px; margin-bottom:10px;">
-
-          <label><b>Role:</b></label>
-          <input type="text" value="${role}" readonly disabled style="width:100%; padding:10px; background:#eee;">
-
-          <h3 style="margin-top:30px; color:#333;">📊 Activity Overview</h3>
-          <p><b>Lessons Completed:</b> ${completed} / ${totalLessons}</p>
-          <p><b>Progress:</b> ${percentage}%</p>
-          <div style="height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; margin-bottom: 15px;">
-            <div style="width: ${percentage}%; background: #28a745; height: 100%;"></div>
-          </div>
-
-          <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
-            <button onclick="saveProfileChanges('${uid}')" style="flex:1; background-color: #007bff; color: white; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">💾 Save Changes</button>
-            <button onclick="promptPasswordChange()" style="flex:1; background-color: #ffc107; color: black; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">🔑 Change Password</button>
-            <button onclick="confirmDeleteAccount()" style="flex:1; background-color: #dc3545; color: white; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Delete Account</button>
-            <button onclick="logoutUser()" style="flex:1; background-color: #6c757d; color: white; padding: 12px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer;">🔓 Logout</button>
-          </div>
-        </div>
-      `;
+        `;
 
       document
         .getElementById("uploadPhoto")
@@ -687,11 +696,15 @@ function saveProfileChanges(uid) {
   const contact = document.getElementById("profileContact").value.trim();
   const country = document.getElementById("profileCountry").value.trim();
 
-  update(ref(db, `students/${uid}`), { name, contact, country })
+  update(ref(db, `students/${uid}`), {
+    fullName: name,
+    contact,
+    country,
+  })
     .then(() => {
-      window.currentUserName = name; // ✅ Update the cached name
+      window.currentUserDisplayName = name; // ✅ Update greeting source
       alert("✅ Profile updated successfully!");
-      showProfile(); // Optional: refresh the profile view
+      showProfile();
     })
     .catch((err) => {
       alert("❌ Failed to update profile: " + err.message);
@@ -711,18 +724,44 @@ function promptPasswordChange() {
 }
 window.promptPasswordChange = promptPasswordChange;
 
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  deleteUser,
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
 function confirmDeleteAccount() {
   if (
     confirm(
       "Are you sure you want to delete your account? This cannot be undone."
     )
   ) {
+    const user = auth.currentUser;
     const uid = window.currentUserId;
-    remove(ref(db, `students/${uid}`));
-    auth.currentUser
-      .delete()
-      .then(() => alert("Account deleted."))
-      .catch((err) => alert("❌ Error: " + err.message));
+
+    const password = prompt("🔐 Please enter your password to confirm:");
+
+    if (!password) {
+      alert("❌ Account deletion cancelled. Password is required.");
+      return;
+    }
+
+    const credential = EmailAuthProvider.credential(user.email, password);
+
+    reauthenticateWithCredential(user, credential)
+      .then(() => {
+        return remove(ref(db, `students/${uid}`)); // delete from DB
+      })
+      .then(() => {
+        return deleteUser(user); // delete from Firebase Auth
+      })
+      .then(() => {
+        alert("✅ Your account has been deleted.");
+        window.location.href = "index.html"; // or a goodbye screen
+      })
+      .catch((err) => {
+        alert("❌ Failed to delete account: " + err.message);
+      });
   }
 }
 window.confirmDeleteAccount = confirmDeleteAccount;
@@ -730,8 +769,7 @@ window.confirmDeleteAccount = confirmDeleteAccount;
 function logoutUser() {
   signOut(auth)
     .then(() => {
-      localStorage.clear();
-      sessionStorage.clear();
+      sessionStorage.clear(); // Only clear temporary session data
       location.replace("index.html?showAuth=1");
     })
     .catch((err) => alert("❌ Logout failed: " + err.message));
@@ -2048,9 +2086,12 @@ onAuthStateChanged(auth, (user) => {
 
       window.currentUserRole = d.role || "student";
       window.currentUserName = d.fullName || "Student";
+      window.currentUserDisplayName =
+        d.fullName || user.displayName || user.email?.split("@")[0] || "User";
 
-      // ✅ Basic image fallback — in case d.photoURL is empty or undefined
-      const defaultAvatar = "https://i.postimg.cc/PJYxtq3x/default-avatar.png";
+      // ✅ Image fallback
+      const defaultAvatar =
+        "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // simplified valid URL
       const img = new Image();
       img.src = d.photoURL || defaultAvatar;
       img.onload = () => {
@@ -2060,10 +2101,9 @@ onAuthStateChanged(auth, (user) => {
         window.currentUserPhoto = defaultAvatar;
       };
 
-      // ✅ Ensure sidebar & mainArea exist before manipulating
+      // ✅ Role-based sidebar logic
       const sideMenu = document.getElementById("sideMenu");
       const mainArea = document.querySelector(".main-area");
-
       if (sideMenu && mainArea) {
         if (window.currentUserRole !== "creator") {
           sideMenu.style.display = "none";
@@ -2074,7 +2114,19 @@ onAuthStateChanged(auth, (user) => {
         }
       }
 
-      // Continue with dashboard setup
+      // ✅ Optional: personalize greeting
+      const greeting = document.getElementById("greeting");
+      if (greeting) {
+        const emoji =
+          window.currentUserRole === "creator"
+            ? "🛠️"
+            : window.currentUserRole === "student"
+            ? "📘"
+            : "👋";
+        greeting.textContent = `Welcome, ${emoji} ${window.currentUserDisplayName}!`;
+      }
+
+      // ✅ Continue app logic
       listenForNotifications?.();
       viewHistory.push("dashboard");
       showDashboard?.();
