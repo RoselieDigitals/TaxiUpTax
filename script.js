@@ -1,20 +1,46 @@
-import { auth } from "./firebase-init.js";
+// 🧩 Firebase core
 import {
+  initializeApp,
+  getApps,
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+  update,
+  remove,
+  onValue,
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import {
+  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-// 🎨 Load saved background styles from admin settings
+// 🔐 Load config from localStorage
+const savedConfig = localStorage.getItem("firebaseConfig");
+if (!savedConfig) {
+  alert("Firebase config not found. Please complete the setup.");
+  window.location.href = "config-setup.html";
+  throw new Error("Missing Firebase config");
+}
+const firebaseConfig = JSON.parse(savedConfig);
+
+// ⚙️ Initialize Firebase
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+// 🎨 Load admin settings (background style)
 const adminSettingsRef = ref(db, "adminSettings");
 onValue(
   adminSettingsRef,
   (snapshot) => {
     const settings = snapshot.val() || {};
-
     if (settings.backgroundColor) {
       document.body.style.backgroundColor = settings.backgroundColor;
     }
-
     if (settings.backgroundImage) {
       document.body.style.backgroundImage = `url(${settings.backgroundImage})`;
       document.body.style.backgroundSize = "cover";
